@@ -19,6 +19,7 @@ import { redirect } from "next/navigation";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { UploadDocumentForm } from "@/components/documents/upload-document-form";
+import { RetrievalTestForm } from "@/components/retrieval/retrieval-test-form";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { getDashboardData } from "@/lib/db/knowledge-bases";
 import {
@@ -436,35 +437,15 @@ export default async function DashboardPage() {
                     </h2>
                   </div>
                   <p className="mt-1 text-sm text-slate-500">
-                    Responses are grounded in retrieved source chunks.
+                    Test pgvector retrieval before generating cited answers.
                   </p>
                 </div>
-
-                <div className="space-y-4 px-5 py-5">
-                  <div className="rounded-lg bg-slate-100 p-4">
-                    <p className="text-sm font-medium text-slate-950">
-                      How should we scope retrieval for multi-user data?
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
-                    <p className="text-sm leading-6 text-slate-800">
-                      Scope retrieval by both user and knowledge base before
-                      semantic ranking. This prevents cross-user leakage and
-                      keeps answers tied to the selected document collection.
-                    </p>
-                  </div>
-                  <label className="block">
-                    <span className="sr-only">Ask a question</span>
-                    <textarea
-                      className="h-28 w-full resize-none rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                      placeholder="Ask a question about the selected knowledge base"
-                    />
-                  </label>
-                  <button className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-medium text-white transition hover:bg-slate-800">
-                    <MessageSquareText size={16} aria-hidden />
-                    Ask with citations
-                  </button>
-                </div>
+                <RetrievalTestForm
+                  knowledgeBases={knowledgeBases.map((base) => ({
+                    id: base.id,
+                    name: base.name,
+                  }))}
+                />
               </section>
 
               <section className="rounded-lg border border-slate-200 bg-white">

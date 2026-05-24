@@ -1,8 +1,10 @@
 import { DocumentStatus } from "@prisma/client";
 
+import { createEmbeddings } from "@/lib/ai/embeddings";
 import { prisma } from "@/lib/db/client";
 import { chunkText } from "@/lib/rag/chunk-text";
 import { parseStoredDocument } from "@/lib/rag/parse-document";
+import { toPgVector } from "@/lib/rag/vector";
 
 export async function processDocument(documentId: string, userId: string) {
   const document = await prisma.document.findFirst({
@@ -42,14 +44,19 @@ export async function processDocument(documentId: string, userId: string) {
       throw new Error("No extractable text was found in this document.");
     }
 
-    await prisma.$transaction([
-      prisma.documentChunk.deleteMany({
+    const embeddings = await createEmbeddings(
+      chunks.map((chunk) => chunk.content),
+    );
+
+    await prisma.$transaction(async (tx) => {
+      await tx.documentChunk.deleteMany({
         where: {
           documentId: document.id,
           userId,
         },
-      }),
-      prisma.documentChunk.createMany({
+      });
+
+      await tx.documentChunk.createMany({
         data: chunks.map((chunk) => ({
           documentId: document.id,
           knowledgeBaseId: document.knowledgeBaseId,
@@ -60,8 +67,38 @@ export async function processDocument(documentId: string, userId: string) {
           sourcePage: chunk.sourcePage,
           sourceTitle: chunk.sourceTitle,
         })),
-      }),
-      prisma.document.update({
+      });
+
+      const createdChunks = await tx.documentChunk.findMany({
+        where: {
+          documentId: document.id,
+          userId,
+        },
+        orderBy: {
+          chunkIndex: "asc",
+        },
+        select: {
+          id: true,
+          chunkIndex: true,
+        },
+      });
+
+      for (const chunk of createdChunks) {
+        const embedding = embeddings[chunk.chunkIndex];
+
+        if (!embedding) {
+          throw new Error("Missing embedding for document chunk.");
+        }
+
+        await tx.$executeRawUnsafe(
+          `UPDATE document_chunks SET embedding = $1::vector WHERE id = $2 AND "userId" = $3`,
+          toPgVector(embedding),
+          chunk.id,
+          userId,
+        );
+      }
+
+      await tx.document.update({
         where: {
           id: document.id,
         },
@@ -69,8 +106,8 @@ export async function processDocument(documentId: string, userId: string) {
           status: DocumentStatus.READY,
           errorMessage: null,
         },
-      }),
-    ]);
+      });
+    });
 
     return {
       chunkCount: chunks.length,

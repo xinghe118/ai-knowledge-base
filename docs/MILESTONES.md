@@ -83,7 +83,7 @@ Done when:
 
 ## 5. Chunking And Embeddings
 
-Status: partial
+Status: done
 
 - Split parsed documents into chunks.
 - Parse TXT, Markdown, and PDF files.
@@ -92,6 +92,8 @@ Status: partial
 - Generate embeddings.
 - Store vectors in pgvector.
 - Add retry-safe processing.
+- Add knowledge-base scoped similarity retrieval.
+- Add dashboard retrieval test form.
 
 Done when:
 

@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KnowFlow
 
-## Getting Started
+AI knowledge base Q&A system built with Next.js, TypeScript, and Tailwind CSS.
 
-First, run the development server:
+The first target is a complete MVP loop:
+
+```text
+Login
+-> Create knowledge base
+-> Upload PDF / Markdown / TXT
+-> Parse and chunk documents
+-> Generate embeddings
+-> Store vectors
+-> Ask questions
+-> Stream cited answers
+-> Save chat history
+```
+
+## Current Status
+
+This repository currently contains the project foundation and a product-shaped dashboard shell. The next implementation phase is authentication and database schema.
+
+## Tech Stack
+
+- Next.js App Router
+- TypeScript
+- Tailwind CSS
+- PostgreSQL + pgvector, planned
+- Auth.js, planned
+- OpenAI-compatible chat and embedding API, planned
+
+## Local Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment
 
-## Learn More
+Copy `.env.example` to `.env.local` when backend integration starts.
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+cp .env.example .env.local
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Database
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The schema is defined in `prisma/schema.prisma`. The first migration enables `pgvector` and creates the user, knowledge base, document, chunk, chat, and usage tables.
 
-## Deploy on Vercel
+Validate the schema:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run db:validate
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Generate Prisma Client:
+
+```bash
+npm run db:generate
+```
+
+Run migrations after PostgreSQL is available:
+
+```bash
+npm run db:migrate
+```
+
+## Development Plan
+
+See:
+
+- `docs/DEVELOPMENT.md`
+- `docs/MILESTONES.md`

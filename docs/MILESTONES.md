@@ -18,12 +18,15 @@ Done when:
 
 ## 2. Authentication
 
-Status: pending
+Status: done
 
 - Add Auth.js.
 - Add user model.
 - Add login/register pages.
 - Protect dashboard routes.
+- Add credentials-based sign in.
+- Add password hashing.
+- Add logout control.
 
 Done when:
 

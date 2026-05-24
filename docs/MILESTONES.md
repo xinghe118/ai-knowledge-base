@@ -67,12 +67,14 @@ Done when:
 
 ## 4. Document Upload
 
-Status: pending
+Status: done
 
 - Validate PDF, Markdown, and TXT uploads.
 - Store file metadata.
 - Parse text.
 - Save document processing status.
+- Store uploaded files locally under `uploads/`.
+- Show recent uploaded documents on the dashboard.
 
 Done when:
 

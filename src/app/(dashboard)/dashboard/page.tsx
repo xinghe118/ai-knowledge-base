@@ -18,6 +18,7 @@ import {
 import { redirect } from "next/navigation";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { UploadDocumentForm } from "@/components/documents/upload-document-form";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { getDashboardData } from "@/lib/db/knowledge-bases";
 import {
@@ -25,30 +26,6 @@ import {
   deleteKnowledgeBase,
   updateKnowledgeBase,
 } from "./actions";
-
-const documents = [
-  {
-    name: "rag-system-design.pdf",
-    type: "PDF",
-    chunks: 128,
-    status: "Ready",
-    updatedAt: "2 min ago",
-  },
-  {
-    name: "deployment-checklist.md",
-    type: "Markdown",
-    chunks: 36,
-    status: "Ready",
-    updatedAt: "18 min ago",
-  },
-  {
-    name: "meeting-notes.txt",
-    type: "Text",
-    chunks: 14,
-    status: "Indexing",
-    updatedAt: "Now",
-  },
-];
 
 const citations = [
   {
@@ -81,7 +58,7 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const { knowledgeBases, documentCount, chunkCount, chatCount } =
+  const { knowledgeBases, documents, documentCount, chunkCount, chatCount } =
     await getDashboardData(userId);
   const readyKnowledgeBases = knowledgeBases.filter(
     (base) => base._count.documents > 0,
@@ -352,6 +329,12 @@ export default async function DashboardPage() {
                     Upload, parse, chunk, embed, then search.
                   </p>
                 </div>
+                <UploadDocumentForm
+                  knowledgeBases={knowledgeBases.map((base) => ({
+                    id: base.id,
+                    name: base.name,
+                  }))}
+                />
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[680px] text-left text-sm">
                     <thead className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
@@ -364,38 +347,56 @@ export default async function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {documents.map((document) => (
-                        <tr key={document.name}>
-                          <td className="px-5 py-4 font-medium text-slate-950">
-                            {document.name}
-                          </td>
-                          <td className="px-5 py-4 text-slate-500">
-                            {document.type}
-                          </td>
-                          <td className="px-5 py-4 text-slate-500">
-                            {document.chunks}
-                          </td>
-                          <td className="px-5 py-4">
-                            <span
-                              className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
-                                document.status === "Ready"
-                                  ? "bg-emerald-50 text-emerald-700"
-                                  : "bg-amber-50 text-amber-700"
-                              }`}
-                            >
-                              {document.status === "Ready" ? (
-                                <CheckCircle2 size={13} aria-hidden />
-                              ) : (
-                                <Clock3 size={13} aria-hidden />
-                              )}
-                              {document.status}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4 text-slate-500">
-                            {document.updatedAt}
+                      {documents.length === 0 ? (
+                        <tr>
+                          <td
+                            className="px-5 py-8 text-center text-slate-500"
+                            colSpan={5}
+                          >
+                            No documents uploaded yet.
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        documents.map((document) => (
+                          <tr key={document.id}>
+                            <td className="px-5 py-4">
+                              <p className="font-medium text-slate-950">
+                                {document.fileName}
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {document.knowledgeBase.name}
+                              </p>
+                            </td>
+                            <td className="px-5 py-4 text-slate-500">
+                              {document.fileType}
+                            </td>
+                            <td className="px-5 py-4 text-slate-500">
+                              {document._count.chunks}
+                            </td>
+                            <td className="px-5 py-4">
+                              <span
+                                className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
+                                  document.status === "READY"
+                                    ? "bg-emerald-50 text-emerald-700"
+                                    : document.status === "FAILED"
+                                      ? "bg-red-50 text-red-700"
+                                      : "bg-amber-50 text-amber-700"
+                                }`}
+                              >
+                                {document.status === "READY" ? (
+                                  <CheckCircle2 size={13} aria-hidden />
+                                ) : (
+                                  <Clock3 size={13} aria-hidden />
+                                )}
+                                {document.status.toLowerCase()}
+                              </span>
+                            </td>
+                            <td className="px-5 py-4 text-slate-500">
+                              {document.updatedAt.toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>

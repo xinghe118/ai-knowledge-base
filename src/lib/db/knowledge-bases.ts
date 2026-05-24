@@ -1,7 +1,7 @@
 import { prisma } from "./client";
 
 export async function getDashboardData(userId: string) {
-  const [knowledgeBases, documentCount, chunkCount, chatCount] =
+  const [knowledgeBases, documents, documentCount, chunkCount, chatCount] =
     await Promise.all([
       prisma.knowledgeBase.findMany({
         where: {
@@ -16,6 +16,30 @@ export async function getDashboardData(userId: string) {
             select: {
               documents: true,
               chats: true,
+            },
+          },
+        },
+      }),
+      prisma.document.findMany({
+        where: {
+          userId,
+          knowledgeBase: {
+            deletedAt: null,
+          },
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 10,
+        include: {
+          knowledgeBase: {
+            select: {
+              name: true,
+            },
+          },
+          _count: {
+            select: {
+              chunks: true,
             },
           },
         },
@@ -48,6 +72,7 @@ export async function getDashboardData(userId: string) {
 
   return {
     knowledgeBases,
+    documents,
     documentCount,
     chunkCount,
     chatCount,

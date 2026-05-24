@@ -35,11 +35,19 @@ export async function registerUser(
     };
   }
 
-  const existingUser = await prisma.user.findUnique({
-    where: {
-      email: parsed.data.email,
-    },
-  });
+  let existingUser;
+
+  try {
+    existingUser = await prisma.user.findUnique({
+      where: {
+        email: parsed.data.email,
+      },
+    });
+  } catch {
+    return {
+      error: "Database is unavailable. Check DATABASE_URL and migrations.",
+    };
+  }
 
   if (existingUser) {
     return {
@@ -49,13 +57,19 @@ export async function registerUser(
 
   const passwordHash = await hashPassword(parsed.data.password);
 
-  await prisma.user.create({
-    data: {
-      name: parsed.data.name,
-      email: parsed.data.email,
-      passwordHash,
-    },
-  });
+  try {
+    await prisma.user.create({
+      data: {
+        name: parsed.data.name,
+        email: parsed.data.email,
+        passwordHash,
+      },
+    });
+  } catch {
+    return {
+      error: "Account creation failed. Check the database connection.",
+    };
+  }
 
   redirect("/login?registered=1");
 }

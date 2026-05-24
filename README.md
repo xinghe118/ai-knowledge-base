@@ -42,7 +42,7 @@ Register / login
 ## Requirements
 
 - Node.js 22+
-- PostgreSQL with the `vector` extension available
+- PostgreSQL with the `vector` extension available, or Docker
 - OpenAI-compatible API key
 
 ## Local Setup
@@ -72,7 +72,13 @@ OPENAI_EMBEDDING_MODEL="text-embedding-3-small"
 OPENAI_EMBEDDING_DIMENSIONS="1536"
 ```
 
-Create the database and enable pgvector:
+Start PostgreSQL with Docker:
+
+```bash
+docker compose up -d
+```
+
+Or create the database manually and enable pgvector:
 
 ```sql
 CREATE DATABASE knowflow;

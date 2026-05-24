@@ -31,11 +31,13 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: parsed.data.email,
-          },
-        });
+        const user = await prisma.user
+          .findUnique({
+            where: {
+              email: parsed.data.email,
+            },
+          })
+          .catch(() => null);
 
         if (!user?.passwordHash) {
           return null;

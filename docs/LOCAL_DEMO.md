@@ -9,8 +9,7 @@ Current MVP progress: 7 of 7 planned stages complete.
 Make sure these are available:
 
 - Node.js 22+
-- PostgreSQL
-- pgvector extension
+- PostgreSQL and pgvector extension, or Docker
 - OpenAI-compatible API key
 
 ## Environment
@@ -30,15 +29,17 @@ OPENAI_EMBEDDING_DIMENSIONS=1536
 
 ## Database
 
-Create database:
+Recommended database setup:
+
+```bash
+docker compose up -d
+```
+
+Manual database setup:
 
 ```sql
 CREATE DATABASE knowflow;
-```
-
-Enable extension:
-
-```sql
+\c knowflow
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 

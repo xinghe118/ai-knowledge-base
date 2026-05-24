@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 import { getCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/client";
+import { processDocument } from "@/lib/documents/process-document";
 import { validateKnowledgeFile } from "@/lib/storage/file-validation";
 import { saveUploadFile } from "@/lib/storage/local-storage";
 
@@ -71,7 +72,7 @@ export async function uploadDocument(
 
   const { storagePath } = await saveUploadFile(file, userId);
 
-  await prisma.document.create({
+  const document = await prisma.document.create({
     data: {
       knowledgeBaseId,
       userId,
@@ -83,9 +84,34 @@ export async function uploadDocument(
     },
   });
 
-  revalidatePath("/dashboard");
+  try {
+    const result = await processDocument(document.id, userId);
 
-  return {
-    success: "Document uploaded and queued for processing.",
-  };
+    revalidatePath("/dashboard");
+
+    return {
+      success: `Document uploaded and processed into ${result.chunkCount} chunks.`,
+    };
+  } catch {
+    revalidatePath("/dashboard");
+
+    return {
+      error: "Document uploaded, but processing failed. Check the document status.",
+    };
+  }
+}
+
+export async function reprocessDocument(formData: FormData) {
+  const userId = await requireUserId();
+  const documentId = String(formData.get("documentId") ?? "");
+
+  if (!documentId) {
+    return;
+  }
+
+  try {
+    await processDocument(documentId, userId);
+  } finally {
+    revalidatePath("/dashboard");
+  }
 }

@@ -26,6 +26,7 @@ import {
   deleteKnowledgeBase,
   updateKnowledgeBase,
 } from "./actions";
+import { reprocessDocument } from "../documents/actions";
 
 const citations = [
   {
@@ -366,6 +367,11 @@ export default async function DashboardPage() {
                               <p className="mt-1 text-xs text-slate-500">
                                 {document.knowledgeBase.name}
                               </p>
+                              {document.errorMessage ? (
+                                <p className="mt-1 max-w-md text-xs text-red-600">
+                                  {document.errorMessage}
+                                </p>
+                              ) : null}
                             </td>
                             <td className="px-5 py-4 text-slate-500">
                               {document.fileType}
@@ -392,7 +398,24 @@ export default async function DashboardPage() {
                               </span>
                             </td>
                             <td className="px-5 py-4 text-slate-500">
-                              {document.updatedAt.toLocaleDateString()}
+                              <div className="flex items-center gap-3">
+                                <span>
+                                  {document.updatedAt.toLocaleDateString()}
+                                </span>
+                                {document.status === "FAILED" ||
+                                document.status === "PENDING" ? (
+                                  <form action={reprocessDocument}>
+                                    <input
+                                      name="documentId"
+                                      type="hidden"
+                                      value={document.id}
+                                    />
+                                    <button className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-50">
+                                      Process again
+                                    </button>
+                                  </form>
+                                ) : null}
+                              </div>
                             </td>
                           </tr>
                         ))

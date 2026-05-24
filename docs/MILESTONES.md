@@ -83,9 +83,12 @@ Done when:
 
 ## 5. Chunking And Embeddings
 
-Status: pending
+Status: partial
 
 - Split parsed documents into chunks.
+- Parse TXT, Markdown, and PDF files.
+- Store chunks in `DocumentChunk`.
+- Update document status during processing.
 - Generate embeddings.
 - Store vectors in pgvector.
 - Add retry-safe processing.

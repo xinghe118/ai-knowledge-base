@@ -101,12 +101,15 @@ Done when:
 
 ## 6. Cited Chat
 
-Status: pending
+Status: done
 
 - Add chat sessions and messages.
 - Build retrieval-augmented prompts.
 - Stream answers.
 - Persist citations.
+- Add source-grounded answer generation.
+- Show citations under generated answers.
+- Show recent chat sessions on the dashboard.
 
 Done when:
 

@@ -18,8 +18,8 @@ import {
 import { redirect } from "next/navigation";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { AskQuestionForm } from "@/components/chat/ask-question-form";
 import { UploadDocumentForm } from "@/components/documents/upload-document-form";
-import { RetrievalTestForm } from "@/components/retrieval/retrieval-test-form";
 import { getCurrentUserId } from "@/lib/auth/session";
 import { getDashboardData } from "@/lib/db/knowledge-bases";
 import {
@@ -28,21 +28,6 @@ import {
   updateKnowledgeBase,
 } from "./actions";
 import { reprocessDocument } from "../documents/actions";
-
-const citations = [
-  {
-    title: "rag-system-design.pdf",
-    location: "Page 6",
-    excerpt:
-      "The retrieval step should filter chunks by workspace and knowledge base before ranking semantic matches.",
-  },
-  {
-    title: "deployment-checklist.md",
-    location: "Heading: Vector Search",
-    excerpt:
-      "Use pgvector for the first release to keep the storage layer simple and reduce operational complexity.",
-  },
-];
 
 const roadmap = [
   "Project foundation",
@@ -60,8 +45,14 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const { knowledgeBases, documents, documentCount, chunkCount, chatCount } =
-    await getDashboardData(userId);
+  const {
+    knowledgeBases,
+    documents,
+    recentChats,
+    documentCount,
+    chunkCount,
+    chatCount,
+  } = await getDashboardData(userId);
   const readyKnowledgeBases = knowledgeBases.filter(
     (base) => base._count.documents > 0,
   ).length;
@@ -437,10 +428,10 @@ export default async function DashboardPage() {
                     </h2>
                   </div>
                   <p className="mt-1 text-sm text-slate-500">
-                    Test pgvector retrieval before generating cited answers.
+                    Generate source-grounded answers from retrieved chunks.
                   </p>
                 </div>
-                <RetrievalTestForm
+                <AskQuestionForm
                   knowledgeBases={knowledgeBases.map((base) => ({
                     id: base.id,
                     name: base.name,
@@ -451,38 +442,44 @@ export default async function DashboardPage() {
               <section className="rounded-lg border border-slate-200 bg-white">
                 <div className="border-b border-slate-200 px-5 py-4">
                   <h2 className="text-base font-semibold text-slate-950">
-                    Source citations
+                    Recent chats
                   </h2>
                   <p className="text-sm text-slate-500">
-                    Every useful answer should expose its evidence.
+                    Saved question and answer sessions.
                   </p>
                 </div>
                 <div className="space-y-3 p-5">
-                  {citations.map((citation) => (
-                    <article
-                      className="rounded-lg border border-slate-200 p-4"
-                      key={`${citation.title}-${citation.location}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <FileText
-                          className="mt-0.5 shrink-0 text-emerald-600"
-                          size={17}
-                          aria-hidden
-                        />
-                        <div className="min-w-0">
-                          <h3 className="truncate text-sm font-semibold text-slate-950">
-                            {citation.title}
-                          </h3>
-                          <p className="mt-0.5 text-xs font-medium text-slate-500">
-                            {citation.location}
-                          </p>
+                  {recentChats.length === 0 ? (
+                    <p className="text-sm text-slate-500">
+                      No chats yet. Ask a question to create the first session.
+                    </p>
+                  ) : (
+                    recentChats.map((chat) => (
+                      <article
+                        className="rounded-lg border border-slate-200 p-4"
+                        key={chat.id}
+                      >
+                        <div className="flex items-start gap-3">
+                          <FileText
+                            className="mt-0.5 shrink-0 text-emerald-600"
+                            size={17}
+                            aria-hidden
+                          />
+                          <div className="min-w-0">
+                            <h3 className="truncate text-sm font-semibold text-slate-950">
+                              {chat.title}
+                            </h3>
+                            <p className="mt-0.5 text-xs font-medium text-slate-500">
+                              {chat.knowledgeBase.name}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <p className="mt-3 text-sm leading-6 text-slate-600">
-                        {citation.excerpt}
-                      </p>
-                    </article>
-                  ))}
+                        <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
+                          {chat.messages[0]?.content || "No answer saved."}
+                        </p>
+                      </article>
+                    ))
+                  )}
                 </div>
               </section>
             </aside>

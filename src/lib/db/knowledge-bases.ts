@@ -1,8 +1,14 @@
 import { prisma } from "./client";
 
 export async function getDashboardData(userId: string) {
-  const [knowledgeBases, documents, documentCount, chunkCount, chatCount] =
-    await Promise.all([
+  const [
+    knowledgeBases,
+    documents,
+    recentChats,
+    documentCount,
+    chunkCount,
+    chatCount,
+  ] = await Promise.all([
       prisma.knowledgeBase.findMany({
         where: {
           userId,
@@ -44,6 +50,31 @@ export async function getDashboardData(userId: string) {
           },
         },
       }),
+      prisma.chatSession.findMany({
+        where: {
+          userId,
+          knowledgeBase: {
+            deletedAt: null,
+          },
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 5,
+        include: {
+          knowledgeBase: {
+            select: {
+              name: true,
+            },
+          },
+          messages: {
+            orderBy: {
+              createdAt: "desc",
+            },
+            take: 1,
+          },
+        },
+      }),
       prisma.document.count({
         where: {
           userId,
@@ -73,6 +104,7 @@ export async function getDashboardData(userId: string) {
   return {
     knowledgeBases,
     documents,
+    recentChats,
     documentCount,
     chunkCount,
     chatCount,

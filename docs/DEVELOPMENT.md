@@ -86,6 +86,21 @@ Every user-owned table must include `userId` and every query must be scoped to t
 - Citations must map to stored document chunks.
 - API keys must stay server-side.
 
+## Implementation Status
+
+Current MVP progress: complete.
+
+Completed stages:
+
+1. Project shell and documentation.
+2. Database schema.
+3. Authentication.
+4. Knowledge base CRUD.
+5. Document upload and parsing.
+6. Chunking, embeddings, and retrieval.
+7. Cited chat.
+8. Demo readiness.
+
 ## First Implementation Order
 
 1. Project shell and documentation.

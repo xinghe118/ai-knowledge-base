@@ -117,12 +117,15 @@ Done when:
 
 ## 7. Demo Readiness
 
-Status: pending
+Status: done
 
 - Add empty states.
 - Add error states.
 - Add tests for chunking and prompt construction.
 - Add setup instructions.
+- Add local demo guide.
+- Add full `npm run check` verification script.
+- Remove unused retrieval test UI.
 
 Done when:
 

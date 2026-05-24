@@ -1,40 +1,90 @@
 # KnowFlow
 
-AI knowledge base Q&A system built with Next.js, TypeScript, and Tailwind CSS.
+KnowFlow is an AI knowledge base Q&A system built with Next.js, TypeScript, Tailwind CSS, PostgreSQL, pgvector, Prisma, and OpenAI-compatible APIs.
 
-The first target is a complete MVP loop:
+It supports the full MVP loop:
 
 ```text
-Login
--> Create knowledge base
+Register / login
+-> Create a knowledge base
 -> Upload PDF / Markdown / TXT
 -> Parse and chunk documents
 -> Generate embeddings
--> Store vectors
+-> Store vectors in pgvector
 -> Ask questions
--> Stream cited answers
+-> Generate cited answers
 -> Save chat history
 ```
 
-## Current Status
+## Features
 
-This repository currently contains the project foundation and a product-shaped dashboard shell. The next implementation phase is authentication and database schema.
+- Credentials authentication with hashed passwords.
+- User-scoped knowledge bases.
+- PDF, Markdown, and TXT upload.
+- Local file storage under `uploads/`.
+- Document parsing and chunking.
+- Embedding generation through an OpenAI-compatible API.
+- pgvector similarity retrieval.
+- RAG answer generation with source citations.
+- Saved chat sessions and recent chat display.
 
 ## Tech Stack
 
 - Next.js App Router
+- React 19
 - TypeScript
 - Tailwind CSS
-- PostgreSQL + pgvector, planned
-- Auth.js, planned
-- OpenAI-compatible chat and embedding API, planned
+- Prisma 7
+- PostgreSQL + pgvector
+- NextAuth
+- OpenAI-compatible chat and embedding APIs
 
-## Local Development
+## Requirements
+
+- Node.js 22+
+- PostgreSQL with the `vector` extension available
+- OpenAI-compatible API key
+
+## Local Setup
 
 Install dependencies:
 
 ```bash
 npm install
+```
+
+Create environment file:
+
+```bash
+cp .env.example .env
+```
+
+Update `.env`:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/knowflow"
+NEXTAUTH_SECRET="replace-with-a-secure-random-secret"
+NEXTAUTH_URL="http://localhost:3000"
+OPENAI_API_KEY="your-api-key"
+OPENAI_BASE_URL="https://api.openai.com/v1"
+OPENAI_CHAT_MODEL="gpt-4.1-mini"
+OPENAI_EMBEDDING_MODEL="text-embedding-3-small"
+OPENAI_EMBEDDING_DIMENSIONS="1536"
+```
+
+Create the database and enable pgvector:
+
+```sql
+CREATE DATABASE knowflow;
+\c knowflow
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+Run migrations and generate Prisma Client:
+
+```bash
+npm run db:migrate
+npm run db:generate
 ```
 
 Start the dev server:
@@ -49,35 +99,38 @@ Open:
 http://localhost:3000
 ```
 
-## Environment
+## Verification
 
-Copy `.env.example` to `.env.local` when backend integration starts.
+Run the full local check:
 
 ```bash
-cp .env.example .env.local
+npm run check
 ```
 
-## Database
-
-The schema is defined in `prisma/schema.prisma`. The first migration enables `pgvector` and creates the user, knowledge base, document, chunk, chat, and usage tables.
-
-Validate the schema:
+Or run individual checks:
 
 ```bash
 npm run db:validate
+npm run lint
+npm run build
 ```
 
-Generate Prisma Client:
+## Demo Flow
 
-```bash
-npm run db:generate
-```
+1. Register a new account.
+2. Create a knowledge base.
+3. Upload a TXT, Markdown, or PDF file.
+4. Wait for the document to become `ready`.
+5. Ask a question in the right-side Q&A panel.
+6. Review the generated answer and citations.
+7. Check recent chats below the Q&A panel.
 
-Run migrations after PostgreSQL is available:
+## Notes
 
-```bash
-npm run db:migrate
-```
+- Real `.env` files are ignored by Git.
+- Uploaded files are ignored by Git through `/uploads`.
+- The app stores files locally for development. S3 or Supabase Storage can replace this later.
+- Embedding and chat generation require `OPENAI_API_KEY`.
 
 ## Development Plan
 

@@ -52,11 +52,13 @@ Done when:
 
 ## 3. Knowledge Base Management
 
-Status: pending
+Status: done
 
 - Add database schema for knowledge bases.
 - Add create, rename, and delete actions.
 - Add real dashboard data.
+- Add user-scoped dashboard statistics.
+- Add soft-delete behavior for knowledge bases.
 
 Done when:
 

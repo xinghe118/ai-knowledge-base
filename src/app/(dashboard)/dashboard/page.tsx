@@ -15,29 +15,16 @@ import {
   ShieldCheck,
   UploadCloud,
 } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import { LogoutButton } from "@/components/auth/logout-button";
-
-const knowledgeBases = [
-  {
-    name: "Product Docs",
-    description: "Roadmaps, specs, release notes",
-    documents: 18,
-    status: "Ready",
-  },
-  {
-    name: "Learning Notes",
-    description: "AI, database, backend notes",
-    documents: 42,
-    status: "Ready",
-  },
-  {
-    name: "Client Research",
-    description: "PDF briefs and meeting notes",
-    documents: 7,
-    status: "Indexing",
-  },
-];
+import { getCurrentUserId } from "@/lib/auth/session";
+import { getDashboardData } from "@/lib/db/knowledge-bases";
+import {
+  createKnowledgeBase,
+  deleteKnowledgeBase,
+  updateKnowledgeBase,
+} from "./actions";
 
 const documents = [
   {
@@ -87,7 +74,19 @@ const roadmap = [
   "Cited chat answers",
 ];
 
-export default function Home() {
+export default async function DashboardPage() {
+  const userId = await getCurrentUserId();
+
+  if (!userId) {
+    redirect("/login");
+  }
+
+  const { knowledgeBases, documentCount, chunkCount, chatCount } =
+    await getDashboardData(userId);
+  const readyKnowledgeBases = knowledgeBases.filter(
+    (base) => base._count.documents > 0,
+  ).length;
+
   return (
     <main className="min-h-screen bg-[#f5f7fb] text-slate-950">
       <div className="flex min-h-screen">
@@ -102,10 +101,13 @@ export default function Home() {
             </div>
           </div>
 
-          <button className="mt-7 flex h-10 w-full items-center justify-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-medium text-white transition hover:bg-slate-800">
+          <a
+            className="mt-7 flex h-10 w-full items-center justify-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-medium text-white transition hover:bg-slate-800"
+            href="#new-knowledge-base"
+          >
             <FolderPlus size={16} aria-hidden />
             New knowledge base
-          </button>
+          </a>
 
           <nav className="mt-7 space-y-1">
             {[
@@ -135,12 +137,12 @@ export default function Home() {
                 <div className="flex items-center gap-3" key={item}>
                   <div
                     className={`flex size-5 items-center justify-center rounded-full ${
-                      index === 0
+                      index < 3
                         ? "bg-emerald-600 text-white"
                         : "bg-white text-slate-400 ring-1 ring-slate-200"
                     }`}
                   >
-                    {index === 0 ? (
+                    {index < 3 ? (
                       <CheckCircle2 size={13} aria-hidden />
                     ) : (
                       <span className="size-1.5 rounded-full bg-current" />
@@ -189,9 +191,24 @@ export default function Home() {
             <div className="space-y-6">
               <section className="grid gap-4 md:grid-cols-3">
                 {[
-                  ["Knowledge bases", "3", "2 ready, 1 indexing", Database],
-                  ["Indexed documents", "67", "178 chunks generated", FileText],
-                  ["Saved chats", "24", "12 with citations", MessageSquareText],
+                  [
+                    "Knowledge bases",
+                    String(knowledgeBases.length),
+                    `${readyKnowledgeBases} with documents`,
+                    Database,
+                  ],
+                  [
+                    "Indexed documents",
+                    String(documentCount),
+                    `${chunkCount} chunks generated`,
+                    FileText,
+                  ],
+                  [
+                    "Saved chats",
+                    String(chatCount),
+                    "Conversation history",
+                    MessageSquareText,
+                  ],
                 ].map(([label, value, detail, Icon]) => (
                   <div
                     className="rounded-lg border border-slate-200 bg-white p-5"
@@ -223,46 +240,106 @@ export default function Home() {
                       Separate document collections keep retrieval scoped.
                     </p>
                   </div>
-                  <button
+                  <a
                     className="flex size-9 items-center justify-center rounded-md bg-emerald-600 text-white transition hover:bg-emerald-700"
+                    href="#new-knowledge-base"
                     aria-label="Create knowledge base"
                   >
                     <Plus size={18} aria-hidden />
-                  </button>
+                  </a>
                 </div>
+                <form
+                  action={createKnowledgeBase}
+                  className="grid gap-3 border-b border-slate-100 bg-slate-50 px-5 py-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]"
+                  id="new-knowledge-base"
+                >
+                  <input
+                    className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    maxLength={80}
+                    minLength={2}
+                    name="name"
+                    placeholder="Knowledge base name"
+                    required
+                  />
+                  <input
+                    className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    maxLength={240}
+                    name="description"
+                    placeholder="Short description"
+                  />
+                  <button className="h-10 rounded-md bg-emerald-600 px-4 text-sm font-medium text-white transition hover:bg-emerald-700">
+                    Create
+                  </button>
+                </form>
                 <div className="divide-y divide-slate-100">
-                  {knowledgeBases.map((base) => (
-                    <button
-                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50"
-                      key={base.name}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="truncate text-sm font-semibold text-slate-950">
-                            {base.name}
-                          </h3>
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                              base.status === "Ready"
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-amber-50 text-amber-700"
-                            }`}
-                          >
-                            {base.status}
-                          </span>
+                  {knowledgeBases.length === 0 ? (
+                    <div className="px-5 py-8 text-sm text-slate-500">
+                      No knowledge bases yet. Create one to start uploading
+                      documents.
+                    </div>
+                  ) : (
+                    knowledgeBases.map((base) => (
+                      <div className="px-5 py-4" key={base.id}>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="truncate text-sm font-semibold text-slate-950">
+                                {base.name}
+                              </h3>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                                  base._count.documents > 0
+                                    ? "bg-emerald-50 text-emerald-700"
+                                    : "bg-slate-100 text-slate-600"
+                                }`}
+                              >
+                                {base._count.documents > 0 ? "Ready" : "Empty"}
+                              </span>
+                            </div>
+                            <p className="mt-1 truncate text-sm text-slate-500">
+                              {base.description || "No description"}
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-4">
+                            <span className="text-sm text-slate-500">
+                              {base._count.documents} docs
+                            </span>
+                            <ChevronRight size={17} aria-hidden />
+                          </div>
                         </div>
-                        <p className="mt-1 truncate text-sm text-slate-500">
-                          {base.description}
-                        </p>
+                        <form
+                          action={updateKnowledgeBase}
+                          className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto_auto]"
+                        >
+                          <input name="id" type="hidden" value={base.id} />
+                          <input
+                            className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                            defaultValue={base.name}
+                            maxLength={80}
+                            minLength={2}
+                            name="name"
+                            required
+                          />
+                          <input
+                            className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                            defaultValue={base.description ?? ""}
+                            maxLength={240}
+                            name="description"
+                            placeholder="Description"
+                          />
+                          <button className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                            Save
+                          </button>
+                          <button
+                            className="h-9 rounded-md border border-red-200 bg-white px-3 text-sm font-medium text-red-700 transition hover:bg-red-50"
+                            formAction={deleteKnowledgeBase}
+                          >
+                            Delete
+                          </button>
+                        </form>
                       </div>
-                      <div className="flex shrink-0 items-center gap-4">
-                        <span className="text-sm text-slate-500">
-                          {base.documents} docs
-                        </span>
-                        <ChevronRight size={17} aria-hidden />
-                      </div>
-                    </button>
-                  ))}
+                    ))
+                  )}
                 </div>
               </section>
 

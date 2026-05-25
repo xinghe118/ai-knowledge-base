@@ -1,112 +1,62 @@
 import { prisma } from "./client";
 
+type DashboardDocument = Awaited<
+  ReturnType<typeof prisma.document.findMany>
+>[number] & {
+  knowledgeBase: {
+    name: string;
+  };
+  _count: {
+    chunks: number;
+  };
+};
+
+type DashboardChat = Awaited<ReturnType<typeof prisma.chatSession.findMany>>[number] & {
+  knowledgeBase: {
+    name: string;
+  };
+  messages: Array<{
+    content: string;
+  }>;
+};
+
 export async function getDashboardData(userId: string) {
-  const [
-    knowledgeBases,
-    documents,
-    recentChats,
-    documentCount,
-    chunkCount,
-    chatCount,
-  ] = await Promise.all([
-      prisma.knowledgeBase.findMany({
-        where: {
-          userId,
-          deletedAt: null,
-        },
-        orderBy: {
-          updatedAt: "desc",
-        },
-        include: {
-          _count: {
-            select: {
-              documents: true,
-              chats: true,
-            },
-          },
-        },
-      }),
-      prisma.document.findMany({
-        where: {
-          userId,
-          knowledgeBase: {
-            deletedAt: null,
-          },
-        },
-        orderBy: {
-          updatedAt: "desc",
-        },
-        take: 10,
-        include: {
-          knowledgeBase: {
-            select: {
-              name: true,
-            },
-          },
-          _count: {
-            select: {
-              chunks: true,
-            },
-          },
-        },
-      }),
-      prisma.chatSession.findMany({
-        where: {
-          userId,
-          knowledgeBase: {
-            deletedAt: null,
-          },
-        },
-        orderBy: {
-          updatedAt: "desc",
-        },
-        take: 5,
-        include: {
-          knowledgeBase: {
-            select: {
-              name: true,
-            },
-          },
-          messages: {
-            orderBy: {
-              createdAt: "desc",
-            },
-            take: 1,
-          },
-        },
-      }),
-      prisma.document.count({
-        where: {
-          userId,
-          knowledgeBase: {
-            deletedAt: null,
-          },
-        },
-      }),
-      prisma.documentChunk.count({
-        where: {
-          userId,
-          knowledgeBase: {
-            deletedAt: null,
-          },
-        },
-      }),
-      prisma.chatSession.count({
-        where: {
-          userId,
-          knowledgeBase: {
-            deletedAt: null,
-          },
-        },
-      }),
-    ]);
+  const knowledgeBases = await prisma.knowledgeBase.findMany({
+    where: {
+      userId,
+      deletedAt: null,
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+  const knowledgeBaseIds = knowledgeBases.map((base) => base.id);
+
+  if (knowledgeBaseIds.length === 0) {
+    return {
+      knowledgeBases: [],
+      documents: [] as DashboardDocument[],
+      recentChats: [] as DashboardChat[],
+      documentCount: 0,
+      chunkCount: 0,
+      chatCount: 0,
+    };
+  }
+
+  const knowledgeBasesWithCounts = knowledgeBases.map((base) => ({
+    ...base,
+    _count: {
+      documents: 0,
+      chats: 0,
+    },
+  }));
 
   return {
-    knowledgeBases,
-    documents,
-    recentChats,
-    documentCount,
-    chunkCount,
-    chatCount,
+    knowledgeBases: knowledgeBasesWithCounts,
+    documents: [] as DashboardDocument[],
+    recentChats: [] as DashboardChat[],
+    documentCount: 0,
+    chunkCount: 0,
+    chatCount: 0,
   };
 }

@@ -1,43 +1,48 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { signIn } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { LogIn } from "lucide-react";
 
-export function LoginForm() {
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
+type LoginFormProps = {
+  error?: string;
+};
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setIsPending(true);
+export function LoginForm({ error }: LoginFormProps) {
+  const [csrfToken, setCsrfToken] = useState("");
 
-    const formData = new FormData(event.currentTarget);
-    const response = await signIn("credentials", {
-      email: String(formData.get("email") ?? ""),
-      password: String(formData.get("password") ?? ""),
-      redirect: false,
-      callbackUrl: "/dashboard",
-    });
+  useEffect(() => {
+    let isMounted = true;
 
-    setIsPending(false);
+    async function loadCsrfToken() {
+      const response = await fetch("/api/auth/csrf");
+      const data = (await response.json()) as { csrfToken?: string };
 
-    if (!response?.ok) {
-      setError("Invalid email or password.");
-      return;
+      if (isMounted) {
+        setCsrfToken(data.csrfToken ?? "");
+      }
     }
 
-    window.location.href = response.url ?? "/dashboard";
-  }
+    void loadCsrfToken();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
-    <form className="mt-8 space-y-5" onSubmit={onSubmit}>
+    <form
+      action="/api/auth/callback/credentials"
+      className="mt-8 space-y-5"
+      method="post"
+    >
+      <input name="csrfToken" type="hidden" value={csrfToken} />
+      <input name="callbackUrl" type="hidden" value="/dashboard" />
       <div>
         <label className="text-sm font-medium text-slate-700" htmlFor="email">
           Email
         </label>
         <input
+          autoComplete="email"
           className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
           id="email"
           name="email"
@@ -54,6 +59,7 @@ export function LoginForm() {
           Password
         </label>
         <input
+          autoComplete="current-password"
           className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
           id="password"
           name="password"
@@ -69,11 +75,11 @@ export function LoginForm() {
       ) : null}
       <button
         className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-slate-950 px-4 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
-        disabled={isPending}
+        disabled={!csrfToken}
         type="submit"
       >
         <LogIn size={16} aria-hidden />
-        {isPending ? "Signing in..." : "Sign in"}
+        Sign in
       </button>
     </form>
   );

@@ -4,6 +4,7 @@ import { LoginForm } from "@/components/auth/login-form";
 
 type LoginPageProps = {
   searchParams: Promise<{
+    error?: string;
     registered?: string;
   }>;
 };
@@ -27,7 +28,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </p>
       ) : null}
 
-      <LoginForm />
+      <LoginForm
+        error={
+          params.error
+            ? "Invalid email or password."
+            : undefined
+        }
+      />
 
       <p className="mt-6 text-center text-sm text-slate-500">
         No account yet?{" "}

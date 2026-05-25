@@ -4,7 +4,6 @@ import { createEmbeddings } from "@/lib/ai/embeddings";
 import { prisma } from "@/lib/db/client";
 import { chunkText } from "@/lib/rag/chunk-text";
 import { parseStoredDocument } from "@/lib/rag/parse-document";
-import { toPgVector } from "@/lib/rag/vector";
 
 export async function processDocument(documentId: string, userId: string) {
   const document = await prisma.document.findFirst({
@@ -90,12 +89,15 @@ export async function processDocument(documentId: string, userId: string) {
           throw new Error("Missing embedding for document chunk.");
         }
 
-        await tx.$executeRawUnsafe(
-          `UPDATE document_chunks SET embedding = $1::vector WHERE id = $2 AND "userId" = $3`,
-          toPgVector(embedding),
-          chunk.id,
-          userId,
-        );
+        await tx.documentChunk.updateMany({
+          where: {
+            id: chunk.id,
+            userId,
+          },
+          data: {
+            embeddingJson: embedding,
+          },
+        });
       }
 
       await tx.document.update({

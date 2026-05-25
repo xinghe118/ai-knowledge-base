@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 const { chunkText } = await import("../src/lib/rag/chunk-text.ts");
-const { toPgVector } = await import("../src/lib/rag/vector.ts");
 const { validateKnowledgeFile } = await import(
   "../src/lib/storage/file-validation.ts"
 );
@@ -42,8 +41,4 @@ test("validateKnowledgeFile rejects unsupported extensions", () => {
   });
 
   assert.equal(result.ok, false);
-});
-
-test("toPgVector formats finite numeric vectors", () => {
-  assert.equal(toPgVector([0.1, -0.25, 1]), "[0.10000000,-0.25000000,1.0000000]");
 });

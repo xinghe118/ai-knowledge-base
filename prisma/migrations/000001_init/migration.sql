@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS vector;
-
 CREATE TYPE "DocumentStatus" AS ENUM ('PENDING', 'PROCESSING', 'READY', 'FAILED');
 CREATE TYPE "ChatMessageRole" AS ENUM ('USER', 'ASSISTANT', 'SYSTEM');
 CREATE TYPE "UsageEventType" AS ENUM ('UPLOAD', 'EMBEDDING', 'CHAT');
@@ -54,7 +52,7 @@ CREATE TABLE "document_chunks" (
   "tokenCount" INTEGER,
   "sourcePage" INTEGER,
   "sourceTitle" TEXT,
-  "embedding" vector(1536),
+  "embeddingJson" JSONB,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   CONSTRAINT "document_chunks_pkey" PRIMARY KEY ("id")
@@ -99,7 +97,6 @@ CREATE INDEX "documents_knowledgeBaseId_status_idx" ON "documents"("knowledgeBas
 CREATE UNIQUE INDEX "document_chunks_documentId_chunkIndex_key" ON "document_chunks"("documentId", "chunkIndex");
 CREATE INDEX "document_chunks_userId_knowledgeBaseId_idx" ON "document_chunks"("userId", "knowledgeBaseId");
 CREATE INDEX "document_chunks_documentId_idx" ON "document_chunks"("documentId");
-CREATE INDEX "document_chunks_embedding_idx" ON "document_chunks" USING ivfflat ("embedding" vector_cosine_ops);
 CREATE INDEX "chat_sessions_userId_knowledgeBaseId_updatedAt_idx" ON "chat_sessions"("userId", "knowledgeBaseId", "updatedAt");
 CREATE INDEX "chat_messages_chatSessionId_createdAt_idx" ON "chat_messages"("chatSessionId", "createdAt");
 CREATE INDEX "usage_logs_userId_createdAt_idx" ON "usage_logs"("userId", "createdAt");

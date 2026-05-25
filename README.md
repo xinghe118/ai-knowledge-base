@@ -1,6 +1,6 @@
 # KnowFlow
 
-KnowFlow is an AI knowledge base Q&A system built with Next.js, TypeScript, Tailwind CSS, PostgreSQL, pgvector, Prisma, and OpenAI-compatible APIs.
+KnowFlow is an AI knowledge base Q&A system built with Next.js, TypeScript, Tailwind CSS, PostgreSQL, Prisma, and OpenAI-compatible APIs.
 
 It supports the full MVP loop:
 
@@ -10,7 +10,7 @@ Register / login
 -> Upload PDF / Markdown / TXT
 -> Parse and chunk documents
 -> Generate embeddings
--> Store vectors in pgvector
+-> Store embeddings
 -> Ask questions
 -> Generate cited answers
 -> Save chat history
@@ -24,7 +24,7 @@ Register / login
 - Local file storage under `uploads/`.
 - Document parsing and chunking.
 - Embedding generation through an OpenAI-compatible API.
-- pgvector similarity retrieval.
+- Cosine similarity retrieval over stored embeddings.
 - RAG answer generation with source citations.
 - Saved chat sessions and recent chat display.
 
@@ -35,14 +35,14 @@ Register / login
 - TypeScript
 - Tailwind CSS
 - Prisma 7
-- PostgreSQL + pgvector
+- PostgreSQL
 - NextAuth
 - OpenAI-compatible chat and embedding APIs
 
 ## Requirements
 
 - Node.js 22+
-- PostgreSQL with the `vector` extension available, or Docker
+- PostgreSQL, or Docker
 - OpenAI-compatible API key
 
 ## Local Setup
@@ -78,12 +78,10 @@ Start PostgreSQL with Docker:
 docker compose up -d
 ```
 
-Or create the database manually and enable pgvector:
+Or create the database manually:
 
 ```sql
 CREATE DATABASE knowflow;
-\c knowflow
-CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
 Run migrations and generate Prisma Client:

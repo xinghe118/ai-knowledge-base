@@ -1,6 +1,5 @@
 import { createEmbedding } from "@/lib/ai/embeddings";
 import { prisma } from "@/lib/db/client";
-import { toPgVector } from "./vector";
 import type { RetrievedChunk } from "./types";
 
 type SearchKnowledgeBaseOptions = {
@@ -11,16 +10,6 @@ type SearchKnowledgeBaseOptions = {
   minScore?: number;
 };
 
-type RetrievedChunkRow = {
-  chunkId: string;
-  documentId: string;
-  documentName: string;
-  content: string;
-  sourcePage: number | null;
-  sourceTitle: string | null;
-  score: number;
-};
-
 export async function searchKnowledgeBase({
   userId,
   knowledgeBaseId,
@@ -29,43 +18,83 @@ export async function searchKnowledgeBase({
   minScore = 0,
 }: SearchKnowledgeBaseOptions): Promise<RetrievedChunk[]> {
   const embedding = await createEmbedding(question);
-  const vector = toPgVector(embedding);
-  const rows = await prisma.$queryRawUnsafe<RetrievedChunkRow[]>(
-    `
-      SELECT
-        dc.id AS "chunkId",
-        d.id AS "documentId",
-        d."fileName" AS "documentName",
-        dc.content,
-        dc."sourcePage",
-        dc."sourceTitle",
-        1 - (dc.embedding <=> $1::vector) AS score
-      FROM document_chunks dc
-      INNER JOIN documents d ON d.id = dc."documentId"
-      INNER JOIN knowledge_bases kb ON kb.id = dc."knowledgeBaseId"
-      WHERE dc."userId" = $2
-        AND dc."knowledgeBaseId" = $3
-        AND dc.embedding IS NOT NULL
-        AND kb."deletedAt" IS NULL
-      ORDER BY dc.embedding <=> $1::vector
-      LIMIT $4
-    `,
-    vector,
-    userId,
-    knowledgeBaseId,
-    topK,
-  );
+  const chunks = await prisma.documentChunk.findMany({
+    where: {
+      userId,
+      knowledgeBaseId,
+      embeddingJson: {
+        not: undefined,
+      },
+      knowledgeBase: {
+        deletedAt: null,
+      },
+    },
+    include: {
+      document: {
+        select: {
+          id: true,
+          fileName: true,
+        },
+      },
+    },
+  });
 
-  return rows
-    .filter((row) => row.score >= minScore)
-    .map((row) => ({
-      chunkId: row.chunkId,
-      documentId: row.documentId,
-      documentName: row.documentName,
-      content: row.content,
-      score: row.score,
-      sourcePage: row.sourcePage ?? undefined,
-      sourceTitle: row.sourceTitle ?? undefined,
-      preview: row.content.slice(0, 240),
+  return chunks
+    .map((chunk) => {
+      const chunkEmbedding = parseEmbedding(chunk.embeddingJson);
+
+      return {
+        chunk,
+        score: chunkEmbedding ? cosineSimilarity(embedding, chunkEmbedding) : 0,
+      };
+    })
+    .filter((item) => item.score >= minScore)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, topK)
+    .map(({ chunk, score }) => ({
+      chunkId: chunk.id,
+      documentId: chunk.document.id,
+      documentName: chunk.document.fileName,
+      content: chunk.content,
+      score,
+      sourcePage: chunk.sourcePage ?? undefined,
+      sourceTitle: chunk.sourceTitle ?? undefined,
+      preview: chunk.content.slice(0, 240),
     }));
+}
+
+function parseEmbedding(value: unknown) {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const vector = value.map((item) => Number(item));
+
+  if (vector.some((item) => !Number.isFinite(item))) {
+    return null;
+  }
+
+  return vector;
+}
+
+function cosineSimilarity(left: number[], right: number[]) {
+  const length = Math.min(left.length, right.length);
+  let dot = 0;
+  let leftMagnitude = 0;
+  let rightMagnitude = 0;
+
+  for (let index = 0; index < length; index += 1) {
+    const leftValue = left[index] ?? 0;
+    const rightValue = right[index] ?? 0;
+
+    dot += leftValue * rightValue;
+    leftMagnitude += leftValue * leftValue;
+    rightMagnitude += rightValue * rightValue;
+  }
+
+  if (leftMagnitude === 0 || rightMagnitude === 0) {
+    return 0;
+  }
+
+  return dot / (Math.sqrt(leftMagnitude) * Math.sqrt(rightMagnitude));
 }

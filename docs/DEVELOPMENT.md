@@ -49,7 +49,7 @@ Browser
 -> Next.js App Router
 -> Server Actions / Route Handlers
 -> Application services
--> PostgreSQL + pgvector
+-> PostgreSQL
 -> AI provider
 ```
 
@@ -85,6 +85,7 @@ Every user-owned table must include `userId` and every query must be scoped to t
 - If retrieved context is insufficient, the assistant should say it cannot answer from the uploaded documents.
 - Citations must map to stored document chunks.
 - API keys must stay server-side.
+- Embeddings are stored as JSON for broad PostgreSQL compatibility; retrieval uses application-level cosine similarity.
 
 ## Implementation Status
 

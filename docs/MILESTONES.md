@@ -90,9 +90,9 @@ Status: done
 - Store chunks in `DocumentChunk`.
 - Update document status during processing.
 - Generate embeddings.
-- Store vectors in pgvector.
+- Store embeddings in JSON for PostgreSQL compatibility.
 - Add retry-safe processing.
-- Add knowledge-base scoped similarity retrieval.
+- Add knowledge-base scoped cosine similarity retrieval.
 - Add dashboard retrieval test form.
 
 Done when:

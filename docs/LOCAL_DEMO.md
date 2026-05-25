@@ -9,7 +9,7 @@ Current MVP progress: 7 of 7 planned stages complete.
 Make sure these are available:
 
 - Node.js 22+
-- PostgreSQL and pgvector extension, or Docker
+- PostgreSQL, or Docker
 - OpenAI-compatible API key
 
 ## Environment
@@ -39,8 +39,6 @@ Manual database setup:
 
 ```sql
 CREATE DATABASE knowflow;
-\c knowflow
-CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
 Apply schema:
@@ -65,4 +63,4 @@ npm run db:migrate
 - If registration fails, check `DATABASE_URL`.
 - If upload succeeds but processing fails, check `OPENAI_API_KEY`.
 - If PDF parsing fails, try a text-based PDF first. Scanned image PDFs need OCR, which is not part of the MVP.
-- If vector search fails, confirm `CREATE EXTENSION IF NOT EXISTS vector;` was run on the target database.
+- If answer generation fails, confirm `OPENAI_API_KEY` is configured and the embedding/chat models are available.

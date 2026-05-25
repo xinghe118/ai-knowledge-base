@@ -1,11 +1,9 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider   = "postgresql"
-  extensions = [vector]
+  provider = "postgresql"
 }
 
 enum DocumentStatus {
@@ -92,7 +90,7 @@ model DocumentChunk {
   tokenCount      Int?
   sourcePage      Int?
   sourceTitle     String?
-  embedding       Unsupported("vector(1536)")?
+  embeddingJson   Json?
   createdAt       DateTime      @default(now())
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
